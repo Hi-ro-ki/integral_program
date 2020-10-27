@@ -1,29 +1,36 @@
-#lici
-"""plaintext=0000000000000000000000000000000000000000000000000000000000000000 #64bit
 
-###pt_msb pt_lsb
-ptm=(plaintext>>32)&0xffffffff
-ptl=plaintext&0xffffffff
-"""
-"""#key schedule
-key=0xffffffffffffffffffffffffffffffff
-rk1=[]
-rk2=[]
-s=[0x3,0xf,0xe,0x1,0x0,0xa,0x5,0x8,0xc,0x4,0xb,0x2,0x9,0x7,0x6,0xd]
-for i in range(31):
-    rkey1=key&0xffffffff #32bits
-    rk1.append(rkey1)
-    rkey2=(key>>32)&0xffffffff #32bits
-    rk2.append(rkey2)
-    key=((key<<13)&0xffffffffffffffffffffffffffffffff)^(key>>115)  ###13shift
-    a=key&0xf
-    b=s[a]
-    c=(key>>4)&0xf
-    d=s[c]
-    e=key^(i<<59)
-    f=(e>>8)<<8 ##sboxの結果を反映させるために8bit0埋めに
-    key=(f^b)^(d<<4)##sboxの結果反映
-"""
+import random
+def main():
+    print("入力Integral特性：aaaacc~c")                                        ####　変更
+    ROUND = int( input("何段分のintegral特性を求めますか？　：") )
+    ATEMPT = 10 #段鍵、平文のランダム設定の回数
+
+    #出力部のIntegral特性　0で初期化
+    output_integral=0x0000000000000000
+    #print(lici(0x0000000000000000,0xffffffffffffffffffffffffffffffff,31))
+    for a in range(ATEMPT):
+        print("")
+        #平文をランダムに設定 64bits
+        plain_text = random.randint(0x0000000000000000,0xffffffffffffffff)
+        #段鍵をランダムに設定 64bits
+        key = random.randint(0x0000000000000000,0xffffffffffffffff)
+
+        xor_sum=0x0000000000000000#初期化
+        
+        #Integral特性 aacccc の計算
+        for delta_p in range(2**4):                                            ### 変更
+            cryptgram = lici(plain_text ^ (delta_p<<60) ,key,ROUND)
+            #print( "0b"+format(cryptgram, '06b'))#暗号文を0埋め6桁2進数で出力
+            xor_sum ^= cryptgram
+            print(format(cryptgram,'064b'))
+        
+        output_integral = output_integral | xor_sum #output_integralにxor総和をOR演算して代入　最後まで0が続いたビットがxor総和０ってこと
+    
+    output_integral = format(output_integral, '064b')
+    print(ROUND,"段: 出力Integral特性：" + output_integral.replace('0', 'b').replace('1', 'u'))
+
+#6bitFeistel暗号の暗号器
+#plain_text:64bits平文、key：128bits鍵、ROUND：暗号器の段数
 #sbox
 def sbox(p):
     s=[0x3,0xf,0xe,0x1,0x0,0xa,0x5,0x8,0xc,0x4,0xb,0x2,0x9,0x7,0x6,0xd]
@@ -60,10 +67,10 @@ def whole_process(pm,pl,round,rk1,rk2):
         p7=(pkm>>7)^((pkm<<25)&0xffffffff)
         pm=p3
         pl=p7
-        print(i,hex(p7),hex(p3))
+        #print(i,hex(p7),hex(p3))
     pl_out,pm_out = pm,pl
     ct=(pl_out<<32)^pm_out
-    ct=format(ct,'x')
+    #ct=format(ct,'x')
     return ct
 
 
@@ -98,4 +105,7 @@ def lici(plaintext,key,round):
     ciphertext=whole_process(ptm,ptl,round,rk1,rk2)
     return ciphertext
 
-print(lici(0x0000000000000000,0xffffffffffffffffffffffffffffffff,31))
+
+
+if __name__=="__main__":
+    main()
