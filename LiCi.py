@@ -3,7 +3,7 @@ import random
 def main():
     print("入力Integral特性：aaaacc~c")                                        ####　変更
     ROUND = int( input("何段分のintegral特性を求めますか？　：") )
-    ATEMPT = 10 #段鍵、平文のランダム設定の回数
+    ATEMPT = 100000 #段鍵、平文のランダム設定の回数
 
     #出力部のIntegral特性　0で初期化
     output_integral=0x0000000000000000
