@@ -1,34 +1,65 @@
 
 import random
+import numpy as np
 def main():
     print("入力Integral特性：aaaacc~c")                                        ####　変更
     ROUND = int( input("何段分のintegral特性を求めますか？　：") )
-    ATEMPT = 100000 #段鍵、平文のランダム設定の回数
+    ATEMPT = 10 #段鍵、平文のランダム設定の回数
 
     #出力部のIntegral特性　0で初期化
     output_integral=0x0000000000000000
-    #print(lici(0x0000000000000000,0xffffffffffffffffffffffffffffffff,31))
+    # print(lici(0x0000000000000000,0xffffffffffffffffffffffffffffffff,31))
+    
     for a in range(ATEMPT):
-        print("")
+        
         #平文をランダムに設定 64bits
         plain_text = random.randint(0x0000000000000000,0xffffffffffffffff)
-        #段鍵をランダムに設定 64bits
-        key = random.randint(0x0000000000000000,0xffffffffffffffff)
+        #鍵をランダムに設定 128bits
+        key = random.randint(0x00000000000000000000000000000000,0xffffffffffffffffffffffffffffffff)
 
-        xor_sum=0x0000000000000000#初期化
-        
+        #xor_sum=0x0000000000000000#初期化
+        total=0
         #Integral特性 aacccc の計算
         for delta_p in range(2**4):                                            ### 変更
             cryptgram = lici(plain_text ^ (delta_p<<60) ,key,ROUND)
             #print( "0b"+format(cryptgram, '06b'))#暗号文を0埋め6桁2進数で出力
-            xor_sum ^= cryptgram
+            
+            row=[]
+            for i in range(64):
+                row=np.append(row,(cryptgram>>(63-i))&1)
+            total+=row
+        #print(total)
+        tem_result=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+        for j in range(64):
+            if total[j]==0 or total[j]==2**4:
+                tem_result[j]='c'
+            elif total[j]%2==0:
+                tem_result[j]='b'
+            else:
+                tem_result[j]='u'
+        print(tem_result)
+        print(" ")
+        if a==0:    
+            result=tem_result
+        else:
+            for l in range(64):
+                if result[l]=='c'and tem_result[l]=='c':
+                    pass
+                elif (result[l]=='b' and tem_result[l]=='b') or (result[l]=='c'and tem_result[l]=='b')or(result[l]=='b'and tem_result[l]=='c'):
+                    result[l]='b'
+                else:
+                    result[l]='u'
+                #print(result)
+    result=''.join(map(str,result))
+    print(ROUND,"段の出力結果",result)
+    """        xor_sum ^= cryptgram
             print(format(cryptgram,'064b'))
         
         output_integral = output_integral | xor_sum #output_integralにxor総和をOR演算して代入　最後まで0が続いたビットがxor総和０ってこと
     
     output_integral = format(output_integral, '064b')
     print(ROUND,"段: 出力Integral特性：" + output_integral.replace('0', 'b').replace('1', 'u'))
-
+    """
 #6bitFeistel暗号の暗号器
 #plain_text:64bits平文、key：128bits鍵、ROUND：暗号器の段数
 #sbox
